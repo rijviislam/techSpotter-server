@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -26,18 +27,110 @@ async function run() {
     // await client.connect();
     // Send a ping to confirm a successful connection
     const usersCollection = client.db("techSpotterDB").collection("users");
+    const productsCollection = client.db("techSpotterDB").collection("products");
 
-    app.post("/user", async (req, res) => {
+    // SIGN TOKEN //
+    app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const query = { email: user.email };
-      const isExistUser = await usersCollection.findOne(query);
-      if (isExistUser) {
-        return res.send({ message: "user already exist!", insertedId: null });
-      }
-      const result = await usersCollection.insertOne(user);
-      res.send(result);
+      const token = jwt.sign(
+        user,
+        process.env.TECHSPOTTER_ASSESS_SECRET_TOKEN,
+        {
+          expiresIn: "1h",
+        }
+      );
+      res.send({ token });
     });
 
+    // VERIFY TOKEN //
+    // const verifyToken = (req, res, next) => {
+    //   console.log("inside verify token", req.headers.authorization);
+
+    //   if (!req.headers.authorization) {
+    //     return res.status(401).send({ message: "unauthorized access" });
+    //   }
+    //   const token = req.headers.authorization.split(" ")[1]; //cutl
+    //   jwt.verify(
+    //     token,
+    //     process.env.TECHSPOTTER_ASSESS_SECRET_TOKEN,
+    //     (err, decoded) => {
+    //       if (err) {
+    //         return res.status(401).send({ message: "unauthorized access" });
+    //       }
+    //       req.decoded = decoded;
+    //       next();
+    //     }
+    //   );
+    // };
+    const verifyToken = (req, res, next) => {
+      console.log("inside verify token", req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "Anauthorized Access!" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(
+        token,
+        process.env.BISTRO_ASSESS_SECRET_TOKEN,
+        (err, decoded) => {
+          if (err) {
+            return res.status(401).send({ message: "unauthorized access" });
+          }
+          req.decoded = decoded;
+          next();
+        }
+      );
+    };
+
+    // GET USER FROM DB //
+    app.get("/users/user/:email", async (req, res) => {
+      const email = req.params.email;
+    //   if (email !== req.decoded.email) {
+    //     return res.status(403).send({ message: "Forbidden Access!" });
+    //   }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user);
+      res.send(user);
+    });
+
+    app.put("/user", async (req, res) => {
+      const user = req.body;
+      const query = { email: user?.email };
+      //   console.log(query);
+      //   const isExistUser = await usersCollection.findOne(query);
+      //   if (isExistUser) {
+      //     return res.send({ message: "user already exist!", insertedId: null });
+      //   }
+
+      const isExist = await usersCollection.findOne(query);
+      if (isExist) {
+        if (user.status === "verified") {
+          // if existing user try to change his role
+          const result = await usersCollection.updateOne(query, {
+            $set: { status: user?.status },
+          });
+          return res.send(result);
+        } else {
+          // if existing user login again
+          return res.send(isExist);
+        }
+      }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          ...user,
+          timestamp: Date.now(),
+        },
+      };
+
+      const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+    app.post("/product", async(req, res) => {
+        const product = req.body;
+        const result = await productsCollection.insertOne(product);
+        res.send(result);
+      })
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
