@@ -97,18 +97,39 @@ async function run() {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
-
-    app.patch("/trending-produsts/:id",async(req, res) => {
-        const id = req.params.id;
-        const query = {_id: new ObjectId(id)}
-        const updateDoc = {
-            $set: {
-                voteCount: req.body.voteCount,
-            }
-        }
-        const result = await productsCollection.updateOne(query,updateDoc);
-        res.send(result)
-    })
+    // UPDATE PRODUCT //
+    app.get("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.findOne(query);
+      res.send(result);
+    });
+    app.patch("/trending-produsts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          voteCount: req.body.voteCount,
+        },
+      };
+      const result = await productsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+    app.patch("/product/:id", async (req, res) => {
+      const updateProduct = req.body;
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          productName: updateProduct.productName,
+          links: updateProduct.links,
+          description: updateProduct.description,
+          productImage: updateProduct.productImage,
+        },
+      };
+      const result = await productsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
 
     // GET USER FROM DB //
     app.get("/users/user/:email", async (req, res) => {
@@ -166,6 +187,13 @@ async function run() {
     app.post("/product", async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    app.delete("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
       res.send(result);
     });
     await client.db("admin").command({ ping: 1 });
