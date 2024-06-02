@@ -14,7 +14,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_TECHSPOTTER_USER}:${process.env.DB_TECHSPOTTER_PASS}@cluster0.yy4jwyq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -93,6 +93,22 @@ async function run() {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
+    app.get("/trending-produsts", async (req, res) => {
+      const result = await productsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/trending-produsts/:id",async(req, res) => {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)}
+        const updateDoc = {
+            $set: {
+                voteCount: req.body.voteCount,
+            }
+        }
+        const result = await productsCollection.updateOne(query,updateDoc);
+        res.send(result)
+    })
 
     // GET USER FROM DB //
     app.get("/users/user/:email", async (req, res) => {
