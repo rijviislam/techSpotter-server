@@ -88,6 +88,12 @@ async function run() {
       );
     };
 
+    // FEATURE PRODUCTS //
+    app.get("/feature-products", async (req, res) => {
+      const result = await productsCollection.find().toArray();
+      res.send(result);
+    });
+
     // GET USER FROM DB //
     app.get("/users/user/:email", async (req, res) => {
       const email = req.params.email;
