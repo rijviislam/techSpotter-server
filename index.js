@@ -6,7 +6,7 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "http://localhost:5174"],
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 };
 
@@ -93,7 +93,7 @@ async function run() {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
-    app.get("/trending-produsts", async (req, res) => {
+    app.get("/trending-products", async (req, res) => {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
@@ -104,7 +104,13 @@ async function run() {
       const result = await productsCollection.findOne(query);
       res.send(result);
     });
-    app.patch("/trending-produsts/:id", async (req, res) => {
+    app.get("/product-details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productsCollection.findOne(query);
+      res.send(result);
+    });
+    app.patch("/trending-products/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -115,6 +121,7 @@ async function run() {
       const result = await productsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
     app.patch("/product/:id", async (req, res) => {
       const updateProduct = req.body;
       const id = req.params.id;
@@ -131,6 +138,33 @@ async function run() {
       res.send(result);
     });
 
+
+
+    app.get("/reported-products", async (req, res) => {
+      const reported = req.query?.reported; 
+      const query = reported === "true" ? { reported: "true" } : {};
+      
+      const result = await productsCollection.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
+    
+    
+    
+
+    app.patch("/product-details/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          reported: "true",
+        },
+      };
+      const result = await productsCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
     // GET USER FROM DB //
     app.get("/users/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -139,7 +173,6 @@ async function run() {
       //   }
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      console.log(user);
       res.send(user);
     });
 
