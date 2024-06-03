@@ -97,6 +97,32 @@ async function run() {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
+    app.get("/product-review-queue", async(req, res) => {
+      const result = await productsCollection.find().toArray();
+      res.send(result);
+    })
+    app.patch("/product-review-queue-accept/:id",async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          status: "accepted",
+        },
+      };
+      const result = await productsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    })
+    app.patch("/product-review-queue-reject/:id",async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          status: "reject",
+        },
+      };
+      const result = await productsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    })
     // UPDATE PRODUCT //
     app.get("/product/:id", async (req, res) => {
       const id = req.params.id;
