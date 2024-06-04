@@ -32,6 +32,7 @@ async function run() {
     // await client.connect();
     // Send a ping to confirm a successful connection
     const usersCollection = client.db("techSpotterDB").collection("users");
+    const reviewCollection = client.db("techSpotterDB").collection("reviews");
     const productsCollection = client
       .db("techSpotterDB")
       .collection("products");
@@ -87,8 +88,19 @@ async function run() {
         }
       );
     };
+    // USE VERIFY ADMIN AFTER VERIFY TOKEN //
 
     // FEATURE PRODUCTS //
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "forbidden access!" });
+      }
+      next();
+    };
     app.get("/feature-products", async (req, res) => {
       const result = await productsCollection.find().toArray();
       res.send(result);
@@ -126,6 +138,14 @@ async function run() {
     // ADMIN //
     app.get("/all-users", async(req, res) => {
       const result = await usersCollection.find().toArray();
+      res.send(result);
+    })
+    app.get("/all-product", async(req, res) => {
+      const result = await productsCollection.find().toArray();
+      res.send(result);
+    })
+    app.get("/all-review", async(req, res) => {
+      const result = await reviewCollection.find().toArray();
       res.send(result);
     })
     //MAKE MODERATOR  
@@ -266,6 +286,12 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
+    // REVIEW POST //
+    app.post("/review", async(req,res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send(result);
+    })
     app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
