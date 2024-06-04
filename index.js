@@ -123,6 +123,35 @@ async function run() {
       const result = await productsCollection.updateOne(query, updateDoc);
       res.send(result);
     })
+    // ADMIN //
+    app.get("/all-users", async(req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    })
+    //MAKE MODERATOR  
+    app.patch("/make-moderator/:id",async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          role: "moderator",
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    })
+    // MAKE ADMIN 
+    app.patch("/make-admin/:id",async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    })
     // UPDATE PRODUCT //
     app.get("/product/:id", async (req, res) => {
       const id = req.params.id;
@@ -147,7 +176,6 @@ async function run() {
       const result = await productsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-
     app.patch("/product/:id", async (req, res) => {
       const updateProduct = req.body;
       const id = req.params.id;
@@ -163,9 +191,6 @@ async function run() {
       const result = await productsCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
-
-
-
     app.get("/reported-products", async (req, res) => {
       const reported = req.query?.reported; 
       const query = reported === "true" ? { reported: "true" } : {};
@@ -174,10 +199,6 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-    
-    
-    
-
     app.patch("/product-details/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -190,7 +211,6 @@ async function run() {
       const result = await productsCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
-
     // GET USER FROM DB //
     app.get("/users/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -201,7 +221,6 @@ async function run() {
       const user = await usersCollection.findOne(query);
       res.send(user);
     });
-
     app.get("/my-product/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
@@ -209,7 +228,6 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-
     app.put("/user", async (req, res) => {
       const user = req.body;
       const query = { email: user?.email };
@@ -248,7 +266,6 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     });
-
     app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
