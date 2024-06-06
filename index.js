@@ -54,11 +54,10 @@ async function run() {
     // VERIFY TOKEN //
     const verifyToken = (req, res, next) => {
       console.log("inside verify token", req.headers.authorization);
-
       if (!req.headers.authorization) {
-        return res.status(401).send({ message: "unauthorized access" });
+        return res.status(401).send({ message: "Anauthorized Access!" });
       }
-      const token = req.headers.authorization.split(" ")[1]; //cutl
+      const token = req.headers.authorization.split(" ")[1];
       jwt.verify(
         token,
         process.env.TECHSPOTTER_ASSESS_SECRET_TOKEN,
@@ -71,37 +70,7 @@ async function run() {
         }
       );
     };
-    // const verifyToken = (req, res, next) => {
-    //   console.log("inside verify token", req.headers.authorization);
-    //   if (!req.headers.authorization) {
-    //     return res.status(401).send({ message: "Anauthorized Access!" });
-    //   }
-    //   const token = req.headers.authorization.split(" ")[1];
-    //   jwt.verify(
-    //     token,
-    //     process.env.BISTRO_ASSESS_SECRET_TOKEN,
-    //     (err, decoded) => {
-    //       if (err) {
-    //         return res.status(401).send({ message: "unauthorized access" });
-    //       }
-    //       req.decoded = decoded;
-    //       next();
-    //     }
-    //   );
-    // };
-    // USE VERIFY ADMIN AFTER VERIFY TOKEN //
 
-    // FEATURE PRODUCTS //
-    const verifyAdmin = async (req, res, next) => {
-      const email = req.decoded.email;
-      const query = { email: email };
-      const user = await usersCollection.findOne(query);
-      const isAdmin = user?.role === "admin";
-      if (!isAdmin) {
-        return res.status(403).send({ message: "forbidden access!" });
-      }
-      next();
-    };
     app.get("/feature-products", async (req, res) => {
       const result = await productsCollection.find().toArray();
       res.send(result);
@@ -110,13 +79,13 @@ async function run() {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
-    app.get("/product-review-queue", async (req, res) => {
+    app.get("/product-review-queue", verifyToken, async (req, res) => {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
     app.patch(
       "/product-review-queue-accept/:id",
-
+      verifyToken,
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -131,7 +100,7 @@ async function run() {
     );
     app.patch(
       "/product-review-queue-reject/:id",
-
+      verifyToken,
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -145,22 +114,22 @@ async function run() {
       }
     );
     // ADMIN //
-    app.get("/all-users", async (req, res) => {
+    app.get("/all-users", verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
-    app.get("/all-product", async (req, res) => {
+    app.get("/all-product", verifyToken, async (req, res) => {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
-    app.get("/all-review", async (req, res) => {
+    app.get("/all-review", verifyToken, async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
     //MAKE MODERATOR
     app.patch(
       "/make-moderator/:id",
-
+verifyToken,
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -174,7 +143,7 @@ async function run() {
       }
     );
     // MAKE ADMIN
-    app.patch("/make-admin/:id", async (req, res) => {
+    app.patch("/make-admin/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -203,7 +172,7 @@ async function run() {
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
-    app.patch("/trending-products/:id", async (req, res) => {
+    app.patch("/trending-products/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -229,7 +198,7 @@ async function run() {
       const result = await productsCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
-    app.get("/reported-products", async (req, res) => {
+    app.get("/reported-products", verifyToken, async (req, res) => {
       const reported = req.query?.reported;
       const query = reported === "true" ? { reported: "true" } : {};
 
@@ -237,7 +206,7 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-    app.patch("/product-details/:id", async (req, res) => {
+    app.patch("/product-details/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const filter = { _id: new ObjectId(id) };
@@ -250,20 +219,16 @@ async function run() {
       res.send(result);
     });
     // GET USER FROM DB //
-    app.get("/users/user/:email", async (req, res) => {
+    app.get("/users/user/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
-      //   if (email !== req.decoded.email) {
-      //     return res.status(403).send({ message: "Forbidden Access!" });
-      //   }
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       res.send(user);
     });
-    app.get("/my-product/:email", async (req, res) => {
+    app.get("/my-product/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await productsCollection.find(query).toArray();
-      console.log(result);
       res.send(result);
     });
     app.put("/user", async (req, res) => {
@@ -299,7 +264,7 @@ async function run() {
       const result = await usersCollection.updateOne(query, updateDoc, options);
       res.send(result);
     });
-    app.post("/product", async (req, res) => {
+    app.post("/product", verifyToken, async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
@@ -311,20 +276,26 @@ async function run() {
       res.send(result);
     });
     // POST COUPON //
-    app.post("/coupons", async (req, res) => {
+    app.post("/coupons",verifyToken, async (req, res) => {
       const coupon = req.body;
       const result = await couponsCollection.insertOne(coupon);
       res.send(result);
     });
-   app.get("/coupons", async(req, res) => {
-    const result = await couponsCollection.find().toArray();
-    res.send(result);
-   })
+    app.get("/coupons",verifyToken, async (req, res) => {
+      const result = await couponsCollection.find().toArray();
+      res.send(result);
+    });
+    app.delete("/coupons/:id",verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await couponsCollection.deleteOne(query);
+      res.send(result);
+    });
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
-    app.delete("/product/:id", async (req, res) => {
+    app.delete("/product/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.deleteOne(query);
