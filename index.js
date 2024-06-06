@@ -33,6 +33,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     const usersCollection = client.db("techSpotterDB").collection("users");
     const reviewCollection = client.db("techSpotterDB").collection("reviews");
+    const couponsCollection = client.db("techSpotterDB").collection("coupons");
     const productsCollection = client
       .db("techSpotterDB")
       .collection("products");
@@ -309,6 +310,16 @@ async function run() {
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
+    // POST COUPON //
+    app.post("/coupons", async (req, res) => {
+      const coupon = req.body;
+      const result = await couponsCollection.insertOne(coupon);
+      res.send(result);
+    });
+   app.get("/coupons", async(req, res) => {
+    const result = await couponsCollection.find().toArray();
+    res.send(result);
+   })
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
