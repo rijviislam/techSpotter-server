@@ -7,7 +7,7 @@ const port = process.env.PORT || 5000;
 
 const corsOptions = {
   origin: ["http://localhost:5173", "http://localhost:5174"],
-  credentials: true, 
+  credentials: true,
 };
 
 // MIDDLE-WARE //
@@ -41,7 +41,7 @@ async function run() {
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(
-        user, 
+        user,
         process.env.TECHSPOTTER_ASSESS_SECRET_TOKEN,
         {
           expiresIn: "1h",
@@ -115,7 +115,7 @@ async function run() {
     });
     app.patch(
       "/product-review-queue-accept/:id",
-      
+
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -130,7 +130,7 @@ async function run() {
     );
     app.patch(
       "/product-review-queue-reject/:id",
-     
+
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -152,14 +152,14 @@ async function run() {
       const result = await productsCollection.find().toArray();
       res.send(result);
     });
-    app.get("/all-review",  async (req, res) => {
+    app.get("/all-review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
     //MAKE MODERATOR
     app.patch(
       "/make-moderator/:id",
-    
+
       async (req, res) => {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -173,7 +173,7 @@ async function run() {
       }
     );
     // MAKE ADMIN
-    app.patch("/make-admin/:id",  async (req, res) => {
+    app.patch("/make-admin/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -185,19 +185,24 @@ async function run() {
       res.send(result);
     });
     // UPDATE PRODUCT //
-    app.get("/product/:id",  async (req, res) => {
+    app.get("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.findOne(query);
       res.send(result);
     });
-    app.get("/product-details/:id",  async (req, res) => {
+    app.get("/product-details/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.findOne(query);
       res.send(result);
     });
-    app.patch("/trending-products/:id",  async (req, res) => {
+    app.get("/product", async (req, res) => {
+      const query = { status: "accepted" };
+      const result = await productsCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.patch("/trending-products/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -208,7 +213,7 @@ async function run() {
       const result = await productsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-    app.patch("/product/:id",  async (req, res) => {
+    app.patch("/product/:id", async (req, res) => {
       const updateProduct = req.body;
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -231,7 +236,7 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-    app.patch("/product-details/:id",  async (req, res) => {
+    app.patch("/product-details/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const filter = { _id: new ObjectId(id) };
@@ -244,7 +249,7 @@ async function run() {
       res.send(result);
     });
     // GET USER FROM DB //
-    app.get("/users/user/:email",  async (req, res) => {
+    app.get("/users/user/:email", async (req, res) => {
       const email = req.params.email;
       //   if (email !== req.decoded.email) {
       //     return res.status(403).send({ message: "Forbidden Access!" });
@@ -253,14 +258,14 @@ async function run() {
       const user = await usersCollection.findOne(query);
       res.send(user);
     });
-    app.get("/my-product/:email",  async (req, res) => {
+    app.get("/my-product/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await productsCollection.find(query).toArray();
       console.log(result);
       res.send(result);
     });
-    app.put("/user",  async (req, res) => {
+    app.put("/user", async (req, res) => {
       const user = req.body;
       const query = { email: user?.email };
       //   console.log(query);
@@ -293,7 +298,7 @@ async function run() {
       const result = await usersCollection.updateOne(query, updateDoc, options);
       res.send(result);
     });
-    app.post("/product",  async (req, res) => {
+    app.post("/product", async (req, res) => {
       const product = req.body;
       const result = await productsCollection.insertOne(product);
       res.send(result);
@@ -304,7 +309,11 @@ async function run() {
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
-    app.delete("/product/:id",  async (req, res) => {
+    app.get("/review", async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    });
+    app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.deleteOne(query);
