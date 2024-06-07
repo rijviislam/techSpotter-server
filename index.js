@@ -114,6 +114,21 @@ async function run() {
         res.send(result);
       }
     );
+    app.patch(
+      "/product-review-queue-feature/:id",
+      verifyToken,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            isFeatured: "true",
+          },
+        };
+        const result = await productsCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
     // ADMIN //
     app.get("/all-users", verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
