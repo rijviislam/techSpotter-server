@@ -184,6 +184,7 @@ async function run() {
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
+
     app.patch("/trending-products/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -191,10 +192,17 @@ async function run() {
         $set: {
           voteCount: req.body.voteCount,
         },
+        $addToSet: { votedEmail: req.body.votedEmail },
       };
+      await productsCollection.updateOne(
+        query,
+        { $set: { votedEmail: [] } },
+        { upsert: true }
+      );
       const result = await productsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
     app.patch("/product/:id", async (req, res) => {
       const updateProduct = req.body;
       const id = req.params.id;
