@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
+const ITEM_PER_PAGE = 6;
 
 const corsOptions = {
   origin: ["http://localhost:5173", "http://localhost:5174"],
@@ -18,7 +19,6 @@ app.use(express.json());
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_TECHSPOTTER_USER}:${process.env.DB_TECHSPOTTER_PASS}@cluster0.yy4jwyq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -179,19 +179,27 @@ async function run() {
       const result = await productsCollection.findOne(query);
       res.send(result);
     });
-    const ITEM_PER_PAGE = 6;
+
+    // PRODUCT SEARCH AND PAGINATION //
     app.get("/product", async (req, res) => {
       const query = { status: "accepted" };
       const page = parseInt(req.query.page) || 1;
-
+      const tags = req.query.tags ? req.query.tags.split(",") : [];
+  
+      if (tags.length > 0) {
+        query.tags = { $in: tags };
+      }
+  
       const totalItems = await productsCollection.countDocuments(query);
       const pageCount = Math.ceil(totalItems / ITEM_PER_PAGE);
+  
       const result = await productsCollection
         .find(query)
         .skip((page - 1) * ITEM_PER_PAGE)
         .limit(ITEM_PER_PAGE)
         .toArray();
 
+  
       res.send({
         pagination: {
           totalItems,
@@ -200,7 +208,7 @@ async function run() {
         result,
       });
     });
-   
+
     app.patch("/trending-products/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
