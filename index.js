@@ -179,12 +179,28 @@ async function run() {
       const result = await productsCollection.findOne(query);
       res.send(result);
     });
+    const ITEM_PER_PAGE = 6;
     app.get("/product", async (req, res) => {
       const query = { status: "accepted" };
-      const result = await productsCollection.find(query).toArray();
-      res.send(result);
-    });
+      const page = parseInt(req.query.page) || 1;
 
+      const totalItems = await productsCollection.countDocuments(query);
+      const pageCount = Math.ceil(totalItems / ITEM_PER_PAGE);
+      const result = await productsCollection
+        .find(query)
+        .skip((page - 1) * ITEM_PER_PAGE)
+        .limit(ITEM_PER_PAGE)
+        .toArray();
+
+      res.send({
+        pagination: {
+          totalItems,
+          pageCount,
+        },
+        result,
+      });
+    });
+   
     app.patch("/trending-products/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
