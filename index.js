@@ -8,7 +8,11 @@ const port = process.env.PORT || 5000;
 const ITEM_PER_PAGE = 6;
 
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://techspotter-a12.web.app",
+  ],
   credentials: true,
 };
 
@@ -185,21 +189,20 @@ async function run() {
       const query = { status: "accepted" };
       const page = parseInt(req.query.page) || 1;
       const tags = req.query.tags ? req.query.tags.split(",") : [];
-  
+
       if (tags.length > 0) {
         query.tags = { $in: tags };
       }
-  
+
       const totalItems = await productsCollection.countDocuments(query);
       const pageCount = Math.ceil(totalItems / ITEM_PER_PAGE);
-  
+
       const result = await productsCollection
         .find(query)
         .skip((page - 1) * ITEM_PER_PAGE)
         .limit(ITEM_PER_PAGE)
         .toArray();
 
-  
       res.send({
         pagination: {
           totalItems,
@@ -338,7 +341,7 @@ async function run() {
       const result = await couponsCollection.insertOne(coupon);
       res.send(result);
     });
-    app.get("/coupons", verifyToken, async (req, res) => {
+    app.get("/coupons", async (req, res) => {
       const result = await couponsCollection.find().toArray();
       res.send(result);
     });
@@ -346,6 +349,46 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await couponsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.patch("/coupon/:id", async (req, res) => {
+      const updateCoupon = req.body;
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          couponCode: updateCoupon.couponCode,
+          couponCodeDescription: updateCoupon.couponCodeDescription,
+          discountAmount: updateCoupon.discountAmount,
+          expiryDate: updateCoupon.expiryDate,
+        },
+      };
+      const result = await couponsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
+    // app.patch("/coupon/:id",verifyToken, async (req, res) => {
+    //   const updateCoupon = req.body;
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const updatedDoc = {
+    //     $set: {
+    //       couponCode: updateCoupon.couponCode,
+    //       couponCodeDescription: updateCoupon.couponCodeDescription,
+    //       discountAmount: updateCoupon.discountAmount,
+    //       expiryDate: updateCoupon.expiryDate,
+    //     },
+    //   };
+    //   const result = await couponsCollection.updateOne(query, updatedDoc);
+    //   res.send(result);
+    // });
+    
+
+    app.get("/coupon/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await couponsCollection.findOne(query);
       res.send(result);
     });
     app.get("/review", async (req, res) => {
@@ -359,7 +402,6 @@ async function run() {
       res.send(result);
     });
     // PAYMENT INTENT //
-
     app.post("/create-payment-intent", verifyToken, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
@@ -373,10 +415,10 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
