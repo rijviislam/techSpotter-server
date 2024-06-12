@@ -185,6 +185,7 @@ async function run() {
     });
 
     // PRODUCT SEARCH AND PAGINATION //
+
     app.get("/product", async (req, res) => {
       const query = { status: "accepted" };
       const page = parseInt(req.query.page) || 1;
@@ -210,6 +211,44 @@ async function run() {
         },
         result,
       });
+    });
+
+    app.get("/product", async (req, res) => {
+      const query = { status: "accepted" };
+      const page = parseInt(req.query.page) || 1;
+      const tags = req.query.tags ? req.query.tags.split(",") : [];
+
+      if (tags.length > 0) {
+        query.tags = { $in: tags };
+      }
+
+      console.log("Query:", query);
+
+      try {
+        const totalItems = await productsCollection.countDocuments(query);
+        const pageCount = Math.ceil(totalItems / ITEM_PER_PAGE);
+
+        console.log("Total Items:", totalItems, "Page Count:", pageCount);
+
+        const result = await productsCollection
+          .find(query)
+          .skip((page - 1) * ITEM_PER_PAGE)
+          .limit(ITEM_PER_PAGE)
+          .toArray();
+
+        console.log("Result:", result);
+
+        res.send({
+          pagination: {
+            totalItems,
+            pageCount,
+          },
+          result,
+        });
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).send({ error: "Internal Server Error" });
+      }
     });
 
     app.patch("/trending-products/:id", verifyToken, async (req, res) => {
@@ -352,7 +391,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/coupon/:id", async (req, res) => {
+    app.patch("/coupon/:id", verifyToken, async (req, res) => {
       const updateCoupon = req.body;
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -367,24 +406,6 @@ async function run() {
       const result = await couponsCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
-
-    // app.patch("/coupon/:id",verifyToken, async (req, res) => {
-    //   const updateCoupon = req.body;
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const updatedDoc = {
-    //     $set: {
-    //       couponCode: updateCoupon.couponCode,
-    //       couponCodeDescription: updateCoupon.couponCodeDescription,
-    //       discountAmount: updateCoupon.discountAmount,
-    //       expiryDate: updateCoupon.expiryDate,
-    //     },
-    //   };
-    //   const result = await couponsCollection.updateOne(query, updatedDoc);
-    //   res.send(result);
-    // });
-    
-
     app.get("/coupon/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
